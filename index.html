@@ -1,183 +1,267 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#080808" />
-  <meta name="description" content="UFC Kuthiradam Football Tournament Manager — draw groups, generate fixtures, track standings and crown a champion." />
-  <title>UFC Kuthiradam — Tournament Manager</title>
-  <link rel="icon" href="assets/ufc-monogram.jpg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
-</head>
-<body>
-  <div class="grain"></div>
-  <div class="app-shell">
-    <header class="topbar">
-      <a class="brand" href="#top" aria-label="UFC Kuthiradam home">
-        <img src="assets/ufc-monogram.jpg" alt="UFC monogram" />
-        <div>
-          <strong>UFC KUTHIRADAM</strong>
-          <span>ARTS &amp; SPORTS CLUB</span>
-        </div>
-      </a>
-      <nav class="topnav" aria-label="Main navigation">
-        <a href="#setup">Teams</a>
-        <a href="#groups">Groups</a>
-        <a href="#fixtures">Fixtures</a>
-        <a href="#knockout">Knockout</a>
-      </nav>
-      <div class="top-actions">
-        <span class="save-state" id="saveState"><i></i> <span id="saveStateText">Connecting…</span></span>
-        <button class="icon-btn" id="resetBtn" title="Reset tournament" aria-label="Reset tournament">↺</button>
-      </div>
-    </header>
-
-    <main id="top">
-      <section class="hero section-pad">
-        <div class="hero-copy">
-          <div class="eyebrow"><span></span> FOOTBALL TOURNAMENT CONTROL ROOM</div>
-          <h1>PLAY. <em>COMPETE.</em><br>MAKE HISTORY.</h1>
-          <p>Run the UFC Kuthiradam tournament from one beautiful, mobile-first dashboard. Set your ten teams, draw two groups, generate every fixture and take the competition all the way to the final.</p>
-          <div class="hero-actions">
-            <button class="btn btn-primary" id="startSetupBtn">Set up tournament <span>→</span></button>
-            <button class="btn btn-ghost" id="scrollFixturesBtn">View competition <span>↓</span></button>
-          </div>
-        </div>
-        <div class="hero-crest-wrap">
-          <div class="hero-glow"></div>
-          <img class="hero-crest" src="assets/ufc-kuthiradam-logo.jpg" alt="UFC Kuthiradam crest" />
-          <div class="hero-badge"><b>10</b><span>TEAMS</span></div>
-        </div>
-      </section>
-
-      <section class="stat-strip section-pad">
-        <div class="stat"><span class="stat-label">TEAMS</span><b id="statTeams">10</b><small>ready to enter</small></div>
-        <div class="stat"><span class="stat-label">GROUPS</span><b>2</b><small>five teams each</small></div>
-        <div class="stat"><span class="stat-label">GROUP GAMES</span><b>20</b><small>round-robin matches</small></div>
-        <div class="stat"><span class="stat-label">FINALS</span><b>3</b><small>2 semis + final</small></div>
-      </section>
-
-      <section class="section-pad" id="setup">
-        <div class="section-heading">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080808" />
+    <meta
+      name="description"
+      content="UFC Kuthiradam Football Tournament Manager — draw groups, generate fixtures, track standings and crown a champion."
+    />
+    <title>UFC Kuthiradam — Tournament Manager</title>
+    <link rel="icon" href="assets/ufc-monogram.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+  </head>
+  <body>
+    <div class="grain"></div>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="UFC Kuthiradam home">
+          <img src="assets/ufc-monogram.jpg" alt="UFC monogram" />
           <div>
-            <div class="eyebrow"><span></span> STEP 01</div>
-            <h2>ENTER THE <em>TEAMS</em></h2>
+            <strong>UFC KUTHIRADAM</strong>
+            <span>ARTS &amp; SPORTS CLUB</span>
           </div>
-          <p>Give every team a name and an optional crest/photo. Images are compressed and synced with the shared tournament. A local cache is also kept for resilience.</p>
+        </a>
+        <nav class="topnav" aria-label="Main navigation">
+          <a href="#setup">Teams</a>
+          <a href="#groups">Groups</a>
+          <a href="#fixtures">Fixtures</a>
+          <a href="#knockout">Knockout</a>
+        </nav>
+        <div class="top-actions">
+          <span class="save-state" id="saveState"
+            ><i></i> <span id="saveStateText">Connecting…</span></span
+          >
+          <button
+            class="icon-btn"
+            id="resetBtn"
+            title="Reset tournament"
+            aria-label="Reset tournament"
+          >
+            ↺
+          </button>
         </div>
+      </header>
 
-        <div class="shared-toolbar">
-          <div>
-            <span class="live-dot"></span><strong>LIVE SHARED TOURNAMENT</strong>
-            <span class="shared-note" id="syncStatus">Connecting to shared database…</span>
-          </div>
-          <div class="shared-actions">
-            <span class="room-code" id="roomCodeLabel">ROOM: UFC-KUTHIRADAM-2026</span>
-            <button class="btn btn-small btn-ghost" id="copyLinkBtn">Copy live link</button>
-          </div>
-        </div>
-        <div class="setup-toolbar">
-          <div class="toolbar-note"><span class="dot"></span> 10 team slots · JPG, PNG or WebP</div>
-          <div class="toolbar-actions">
-            <button class="btn btn-small btn-ghost" id="fillDemoBtn">Fill demo teams</button>
-            <button class="btn btn-small btn-primary" id="saveTeamsBtn">Save teams</button>
-          </div>
-        </div>
-        <div class="team-grid" id="teamGrid"></div>
-      </section>
-
-      <section class="draw-section section-pad" id="groups">
-        <div class="section-heading light">
-          <div>
-            <div class="eyebrow"><span></span> STEP 02</div>
-            <h2>DRAW THE <em>GROUPS</em></h2>
-          </div>
-          <p>Keep the first five entered teams in Group A and the next five in Group B. Fixtures are shared live with every device using this tournament link.</p>
-        </div>
-        <div class="draw-panel">
-          <div class="draw-orbit orbit-one"></div><div class="draw-orbit orbit-two"></div>
-          <div class="draw-content">
-            <span class="draw-label">UFC KUTHIRADAM • OFFICIAL DRAW</span>
-            <div class="draw-groups-preview">
-              <div><span>A</span><b>5 teams</b></div>
-              <div class="vs">VS</div>
-              <div><span>B</span><b>5 teams</b></div>
+      <main id="top">
+        <section class="hero section-pad">
+          <div class="hero-copy">
+            <div class="eyebrow">
+              <span></span> FOOTBALL TOURNAMENT CONTROL ROOM
             </div>
-            <button class="btn btn-gold" id="drawGroupsBtn"><span class="shuffle-icon">⤨</span> Draw groups</button>
-            <p class="draw-hint" id="drawHint">Enter all ten teams above to activate the draw.</p>
+            <h1>PLAY. <em>COMPETE.</em><br />MAKE HISTORY.</h1>
+            <p>
+              Run the UFC Kuthiradam tournament from one beautiful, mobile-first
+              dashboard. Set your ten teams, draw two groups, generate every
+              fixture and take the competition all the way to the final.
+            </p>
+            <div class="hero-actions">
+              <button class="btn btn-primary" id="startSetupBtn">
+                Set up tournament <span>→</span>
+              </button>
+              <button class="btn btn-ghost" id="scrollFixturesBtn">
+                View competition <span>↓</span>
+              </button>
+            </div>
           </div>
-        </div>
-        <div class="groups-grid" id="groupsGrid"></div>
-      </section>
+          <div class="hero-crest-wrap">
+            <div class="hero-glow"></div>
+            <img
+              class="hero-crest"
+              src="assets/ufc-kuthiradam-logo.jpg"
+              alt="UFC Kuthiradam crest"
+            />
+            <div class="hero-badge"><b>10</b><span>TEAMS</span></div>
+          </div>
+        </section>
 
-      <section class="section-pad" id="fixtures">
-        <div class="section-heading">
+        <section class="stat-strip section-pad">
+          <div class="stat">
+            <span class="stat-label">TEAMS</span><b id="statTeams">10</b
+            ><small>ready to enter</small>
+          </div>
+          <div class="stat">
+            <span class="stat-label">GROUPS</span><b>2</b
+            ><small>five teams each</small>
+          </div>
+          <div class="stat">
+            <span class="stat-label">GROUP GAMES</span><b>20</b
+            ><small>round-robin matches</small>
+          </div>
+          <div class="stat">
+            <span class="stat-label">FINALS</span><b>3</b
+            ><small>2 semis + final</small>
+          </div>
+        </section>
+
+        <section class="section-pad" id="setup">
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow"><span></span> STEP 01</div>
+              <h2>ENTER THE <em>TEAMS</em></h2>
+            </div>
+            <p>
+              Give every team a name and an optional crest/photo. Images are
+              compressed and synced with the shared tournament. A local cache is
+              also kept for resilience.
+            </p>
+          </div>
+
+          <div class="shared-toolbar">
+            <div>
+              <span class="live-dot"></span
+              ><strong>LIVE SHARED TOURNAMENT</strong>
+              <span class="shared-note" id="syncStatus"
+                >Connecting to shared database…</span
+              >
+            </div>
+            <div class="shared-actions">
+              <span class="room-code" id="roomCodeLabel"
+                >ROOM: UFC-KUTHIRADAM-2026</span
+              >
+              <button class="btn btn-small btn-ghost" id="copyLinkBtn">
+                Copy live link
+              </button>
+            </div>
+          </div>
+          <div class="setup-toolbar">
+            <div class="toolbar-note">
+              <span class="dot"></span> 10 team slots · JPG, PNG or WebP
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn btn-small btn-ghost" id="fillDemoBtn">
+                Fill demo teams
+              </button>
+              <button class="btn btn-small btn-primary" id="saveTeamsBtn">
+                Save teams
+              </button>
+            </div>
+          </div>
+          <div class="team-grid" id="teamGrid"></div>
+        </section>
+
+        <section class="draw-section section-pad" id="groups">
+          <div class="section-heading light">
+            <div>
+              <div class="eyebrow"><span></span> STEP 02</div>
+              <h2>DRAW THE <em>GROUPS</em></h2>
+            </div>
+            <p>
+              Keep the first five entered teams in Group A and the next five in
+              Group B. Fixtures are shared live with every device using this
+              tournament link.
+            </p>
+          </div>
+          <div class="draw-panel">
+            <div class="draw-orbit orbit-one"></div>
+            <div class="draw-orbit orbit-two"></div>
+            <div class="draw-content">
+              <span class="draw-label">UFC KUTHIRADAM • OFFICIAL DRAW</span>
+              <div class="draw-groups-preview">
+                <div><span>A</span><b>5 teams</b></div>
+                <div class="vs">VS</div>
+                <div><span>B</span><b>5 teams</b></div>
+              </div>
+              <button class="btn btn-gold" id="drawGroupsBtn">
+                <span class="shuffle-icon">⤨</span> Draw groups
+              </button>
+              <p class="draw-hint" id="drawHint">
+                Enter all ten teams above to activate the draw.
+              </p>
+            </div>
+          </div>
+          <div class="groups-grid" id="groupsGrid"></div>
+        </section>
+
+        <section class="section-pad" id="fixtures">
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow"><span></span> STEP 03</div>
+              <h2>FIXTURES &amp; <em>RESULTS</em></h2>
+            </div>
+            <p>
+              Every team plays every other team in its group once. Enter scores
+              to update the tables automatically.
+            </p>
+          </div>
+          <div class="fixture-toolbar">
+            <div class="tabs" id="fixtureTabs">
+              <button class="tab active" data-group="A">GROUP A</button>
+              <button class="tab" data-group="B">GROUP B</button>
+            </div>
+            <button class="btn btn-small btn-ghost" id="regenerateFixturesBtn">
+              ↻ Regenerate fixtures
+            </button>
+          </div>
+          <div class="rounds" id="rounds"></div>
+        </section>
+
+        <section class="standings-section section-pad">
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow"><span></span> LIVE TABLES</div>
+              <h2>GROUP <em>STANDINGS</em></h2>
+            </div>
+            <p>
+              Three points for a win, one for a draw. Top two from each group
+              qualify for the semi-finals.
+            </p>
+          </div>
+          <div class="standings-grid" id="standingsGrid"></div>
+        </section>
+
+        <section class="knockout-section section-pad" id="knockout">
+          <div class="section-heading light">
+            <div>
+              <div class="eyebrow"><span></span> STEP 04</div>
+              <h2>THE <em>ROAD TO GLORY</em></h2>
+            </div>
+            <p>
+              Group winners face the opposite group runners-up. Winners advance
+              automatically to the final.
+            </p>
+          </div>
+          <div class="bracket" id="bracket"></div>
+        </section>
+
+        <section class="champion-section section-pad" id="championSection">
+          <div class="champion-card" id="championCard">
+            <div class="champion-rays"></div>
+            <div class="champion-content">
+              <img src="assets/ufc-monogram.jpg" alt="UFC" />
+              <span class="eyebrow">UFC KUTHIRADAM CHAMPIONSHIP</span>
+              <h2 id="championName">THE CHAMPION<br /><em>IS WAITING.</em></h2>
+              <p id="championSub">
+                Complete the knockout stage to crown the winner.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer section-pad">
+        <div class="footer-brand">
+          <img src="assets/ufc-monogram.jpg" alt="UFC monogram" />
           <div>
-            <div class="eyebrow"><span></span> STEP 03</div>
-            <h2>FIXTURES &amp; <em>RESULTS</em></h2>
-          </div>
-          <p>Every team plays every other team in its group once. Enter scores to update the tables automatically.</p>
-        </div>
-        <div class="fixture-toolbar">
-          <div class="tabs" id="fixtureTabs">
-            <button class="tab active" data-group="A">GROUP A</button>
-            <button class="tab" data-group="B">GROUP B</button>
-          </div>
-          <button class="btn btn-small btn-ghost" id="regenerateFixturesBtn">↻ Regenerate fixtures</button>
-        </div>
-        <div class="rounds" id="rounds"></div>
-      </section>
-
-      <section class="standings-section section-pad">
-        <div class="section-heading">
-          <div>
-            <div class="eyebrow"><span></span> LIVE TABLES</div>
-            <h2>GROUP <em>STANDINGS</em></h2>
-          </div>
-          <p>Three points for a win, one for a draw. Top two from each group qualify for the semi-finals.</p>
-        </div>
-        <div class="standings-grid" id="standingsGrid"></div>
-      </section>
-
-      <section class="knockout-section section-pad" id="knockout">
-        <div class="section-heading light">
-          <div>
-            <div class="eyebrow"><span></span> STEP 04</div>
-            <h2>THE <em>ROAD TO GLORY</em></h2>
-          </div>
-          <p>Group winners face the opposite group runners-up. Winners advance automatically to the final.</p>
-        </div>
-        <div class="bracket" id="bracket"></div>
-      </section>
-
-      <section class="champion-section section-pad" id="championSection">
-        <div class="champion-card" id="championCard">
-          <div class="champion-rays"></div>
-          <div class="champion-content">
-            <img src="assets/ufc-monogram.jpg" alt="UFC" />
-            <span class="eyebrow">UFC KUTHIRADAM CHAMPIONSHIP</span>
-            <h2 id="championName">THE CHAMPION<br><em>IS WAITING.</em></h2>
-            <p id="championSub">Complete the knockout stage to crown the winner.</p>
+            <strong>UFC KUTHIRADAM</strong><span>ARTS &amp; SPORTS CLUB</span>
           </div>
         </div>
-      </section>
-    </main>
-
-    <footer class="footer section-pad">
-      <div class="footer-brand">
-        <img src="assets/ufc-monogram.jpg" alt="UFC monogram" />
-        <div><strong>UFC KUTHIRADAM</strong><span>ARTS &amp; SPORTS CLUB</span></div>
-      </div>
-      <div class="footer-copy">Shared tournament manager · Live data synced across devices</div>
-      <div class="footer-year">2026</div>
-    </footer>
-  </div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>
-</body>
+        <div class="footer-copy">
+          Shared tournament manager · Live data synced across devices
+        </div>
+        <div class="footer-year">2026</div>
+      </footer>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
 </html>
