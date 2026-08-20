@@ -525,16 +525,16 @@ function fillDemo() {
   if (blockViewerEdit("Viewer mode: teams cannot be changed.")) return;
 
   const names = [
-    "Falcons FC",
-    "Royal United",
-    "Kuthiradam Stars",
-    "Warriors FC",
-    "Red Lions",
-    "Golden Boys",
-    "Phoenix FC",
-    "United Eleven",
-    "Blitz FC",
-    "Titans FC",
+    "ALPHA UNITED",
+    "BLACK PANTHERS",
+    "EMPIRE FC",
+    "ROYAL STRIKES",
+    "TARGARIAN FC",
+    "BLITZ FC",
+    "NOVA FC",
+    "ROVERS FC",
+    "TITAN FC",
+    "VIKINGS FC",
   ];
 
   state.teams.forEach((team, i) => {
