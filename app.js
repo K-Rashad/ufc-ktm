@@ -13,13 +13,31 @@ const defaultState = {
   groups: { A: [], B: [] },
   fixtures: { A: [], B: [] },
   knockout: {
-    sf1: { home: null, away: null, homeScore: "", awayScore: "", winner: null },
-    sf2: { home: null, away: null, homeScore: "", awayScore: "", winner: null },
+    sf1: {
+      home: null,
+      away: null,
+      homeScore: "",
+      awayScore: "",
+      homeScorers: [],
+      awayScorers: [],
+      winner: null,
+    },
+    sf2: {
+      home: null,
+      away: null,
+      homeScore: "",
+      awayScore: "",
+      homeScorers: [],
+      awayScorers: [],
+      winner: null,
+    },
     final: {
       home: null,
       away: null,
       homeScore: "",
       awayScore: "",
+      homeScorers: [],
+      awayScorers: [],
       winner: null,
     },
   },
@@ -80,7 +98,9 @@ function applyViewerMode() {
   });
 
   // Disable group-stage score editing
-  $$("#rounds .score-input, #rounds .save-match").forEach((el) => {
+  $$(
+    "#rounds .score-input, #rounds .scorer-input, #rounds .save-match",
+  ).forEach((el) => {
     el.disabled = true;
     el.style.opacity = "0.55";
     el.style.cursor = "not-allowed";
@@ -587,6 +607,8 @@ function makeFiveTeamFixtures(teamIds) {
       away: a[y],
       homeScore: "",
       awayScore: "",
+      homeScorers: [],
+      awayScorers: [],
       played: false,
     })),
   );
@@ -767,46 +789,70 @@ function renderMatch(match, ri, mi) {
   return `
     <div class="match">
 
-      <div class="team-side">
-        ${avatarHTML(home)}
-        <span>
-          ${escapeHtml(home?.name || "TBD")}
-        </span>
+      <div class="team-side left">
+        <div class="team-meta">
+          ${avatarHTML(home)}
+          <span>
+            ${escapeHtml(home?.name || "TBD")}
+          </span>
+        </div>
+        <input
+          class="scorer-input scorer-input-home"
+          id="scorers-${activeGroup}-${ri}-${mi}-h"
+          type="text"
+          placeholder="Goal scorers"
+          value="${(match.homeScorers || []).join(", ")}" 
+          aria-label="Home scorers"
+        >
       </div>
 
       <div class="score-box">
 
-        <input
-          class="score-input"
-          id="score-${activeGroup}-${ri}-${mi}-h"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          maxlength="2"
-          value="${match.homeScore}"
-          aria-label="Home score"
-        >
+        <div class="score-row">
+          <input
+            class="score-input"
+            id="score-${activeGroup}-${ri}-${mi}-h"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="2"
+            value="${match.homeScore}"
+            aria-label="Home score"
+          >
 
-        <span class="score-sep">:</span>
+          <span class="score-sep">:</span>
 
-        <input
-          class="score-input"
-          id="score-${activeGroup}-${ri}-${mi}-a"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          maxlength="2"
-          value="${match.awayScore}"
-          aria-label="Away score"
-        >
+          <input
+            class="score-input"
+            id="score-${activeGroup}-${ri}-${mi}-a"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="2"
+            value="${match.awayScore}"
+            aria-label="Away score"
+          >
+        </div>
+
+        <!-- scorers moved to team sides -->
 
       </div>
 
       <div class="team-side right">
+        <div class="team-meta">
+          <span>
+            ${escapeHtml(away?.name || "TBD")}
+          </span>
 
-        <span>
-          ${escapeHtml(away?.name || "TBD")}
-        </span>
+          ${avatarHTML(away)}
+        </div>
 
-        ${avatarHTML(away)}
+        <input
+          class="scorer-input scorer-input-away"
+          id="scorers-${activeGroup}-${ri}-${mi}-a"
+          type="text"
+          placeholder="Goal scorers"
+          value="${(match.awayScorers || []).join(", ")}" 
+          aria-label="Away scorers"
+        >
 
       </div>
 
@@ -848,6 +894,34 @@ function saveMatch(ri, mi) {
   match.homeScore = Number(h);
 
   match.awayScore = Number(a);
+
+  // parse scorer inputs (comma separated list)
+  try {
+    const hs = document
+      .getElementById(`scorers-${activeGroup}-${ri}-${mi}-h`)
+      ?.value.trim();
+
+    const as = document
+      .getElementById(`scorers-${activeGroup}-${ri}-${mi}-a`)
+      ?.value.trim();
+
+    match.homeScorers = hs
+      ? hs
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+
+    match.awayScorers = as
+      ? as
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+  } catch (e) {
+    match.homeScorers = match.homeScorers || [];
+    match.awayScorers = match.awayScorers || [];
+  }
 
   match.played = true;
 
@@ -1028,6 +1102,101 @@ function renderStandings() {
         `;
     })
     .join("");
+
+  // Compute Top Scorers across group fixtures and knockout matches
+  try {
+    const scorerMap = {};
+
+    // group fixtures
+    ["A", "B"].forEach((g) => {
+      (state.fixtures[g] || []).flat().forEach((m) => {
+        (m.homeScorers || []).forEach((nm) => {
+          const name = (nm || "").trim();
+          if (!name) return;
+          scorerMap[name] = (scorerMap[name] || 0) + 1;
+        });
+
+        (m.awayScorers || []).forEach((nm) => {
+          const name = (nm || "").trim();
+          if (!name) return;
+          scorerMap[name] = (scorerMap[name] || 0) + 1;
+        });
+      });
+    });
+
+    // knockout
+    Object.values(state.knockout || {}).forEach((m) => {
+      if (!m) return;
+      (m.homeScorers || []).forEach((nm) => {
+        const name = (nm || "").trim();
+        if (!name) return;
+        scorerMap[name] = (scorerMap[name] || 0) + 1;
+      });
+      (m.awayScorers || []).forEach((nm) => {
+        const name = (nm || "").trim();
+        if (!name) return;
+        scorerMap[name] = (scorerMap[name] || 0) + 1;
+      });
+    });
+
+    const top = Object.entries(scorerMap)
+      .map(([name, goals]) => ({ name, goals }))
+      .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name))
+      .slice(0, 10);
+
+    const out = document.getElementById("topScorers");
+
+    if (!out) return;
+
+    if (!top.length) {
+      out.innerHTML = `
+        <div class="table-card">
+          <div class="table-head">
+            <h3>TOP SCORERS</h3>
+            <span>LIVE</span>
+          </div>
+          <div class="table-wrap">
+            <div class="empty-state">No scorers recorded yet.</div>
+          </div>
+        </div>
+      `;
+    } else {
+      out.innerHTML = `
+        <div class="table-card">
+          <div class="table-head">
+            <h3>TOP SCORERS</h3>
+            <span>GOALS</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>PLAYER</th>
+                  <th>G</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${top
+                  .map(
+                    (t, i) => `
+                      <tr>
+                        <td class="rank ${i === 0 ? "top" : ""}">${i + 1}</td>
+                        <td style="text-align:left;padding-left:14px">${escapeHtml(t.name)}</td>
+                        <td>${t.goals}</td>
+                      </tr>
+                    `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    /* non-fatal */
+  }
 }
 
 function qualification() {
@@ -1155,6 +1324,17 @@ function bracketMatchHTML(match, key, isFinal = false) {
           ${escapeHtml(home?.name || "TBD")}
         </span>
 
+        <input
+          data-ko-key="${key}"
+          data-ko-field="homeScorers"
+          type="text"
+          value="${(match.homeScorers || []).join(", ")}" 
+          ${disabled}
+          placeholder="Goal scorers"
+          class="bracket-scorer"
+          aria-label="${key} home scorers"
+        >
+
         <span class="seed"></span>
 
       </div>
@@ -1166,6 +1346,17 @@ function bracketMatchHTML(match, key, isFinal = false) {
         <span>
           ${escapeHtml(away?.name || "TBD")}
         </span>
+
+        <input
+          data-ko-key="${key}"
+          data-ko-field="awayScorers"
+          type="text"
+          value="${(match.awayScorers || []).join(", ")}" 
+          ${disabled}
+          placeholder="Goal scorers"
+          class="bracket-scorer"
+          aria-label="${key} away scorers"
+        >
 
         <span class="seed"></span>
 
@@ -1194,6 +1385,8 @@ function bracketMatchHTML(match, key, isFinal = false) {
           ${disabled}
           aria-label="${key} away score"
         >
+
+        <!-- scorers moved into bracket team blocks -->
 
         <button
           data-ko-save="${key}"
@@ -1226,6 +1419,15 @@ function attachBracketListeners() {
         .querySelector(`[data-ko-key="${key}"][data-ko-field="awayScore"]`)
         .value.trim();
 
+      // scorer fields (comma separated)
+      const hs = document
+        .querySelector(`[data-ko-key="${key}"][data-ko-field="homeScorers"]`)
+        ?.value.trim();
+
+      const as = document
+        .querySelector(`[data-ko-key="${key}"][data-ko-field="awayScorers"]`)
+        ?.value.trim();
+
       if (h === "" || a === "") {
         toast("Enter both knockout scores.");
 
@@ -1243,6 +1445,20 @@ function attachBracketListeners() {
       match.homeScore = Number(h);
 
       match.awayScore = Number(a);
+
+      match.homeScorers = hs
+        ? hs
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+
+      match.awayScorers = as
+        ? as
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
 
       match.winner = Number(h) > Number(a) ? match.home : match.away;
 
